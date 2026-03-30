@@ -410,13 +410,21 @@
   checkPermission();
   connect();
 
-  // 起動時にCacheAPIから未読push通知を取り出して表示
-  caches.open('truckcall-push').then(async cache => {
+  // CacheAPIから未読push通知を取り出して表示（起動時 + フォアグラウンド復帰時）
+  async function checkPendingPush() {
+    if (!('caches' in window)) return;
+    const cache = await caches.open('truckcall-push');
     const r = await cache.match('/pending');
     if (!r) return;
     const { title, body } = await r.json();
     addNotification(title, body);
-    cache.delete('/pending');
+    await cache.delete('/pending');
+  }
+
+  checkPendingPush();
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') checkPendingPush();
   });
 
   // 既に許可済みの場合はサービスワーカー準備後にsubscription登録
