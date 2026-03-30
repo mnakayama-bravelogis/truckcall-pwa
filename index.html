@@ -414,6 +414,15 @@
   if ('serviceWorker' in navigator && Notification.permission === 'granted') {
     navigator.serviceWorker.ready.then(reg => subscribePush(reg));
   }
+
+  // SWからのpushメッセージを受け取って画面に反映
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', e => {
+      if (e.data?.type === 'push') {
+        addNotification(e.data.title, e.data.body);
+      }
+    });
+  }
 </script>
 
 </body>

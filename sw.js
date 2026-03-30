@@ -13,16 +13,25 @@ self.addEventListener('activate', e => {
 // fetchハンドラーなし（キャッシュ不使用）
 
 self.addEventListener('push', e => {
-  const data = e.data ? e.data.json() : { title: 'TruckCALL', body: '呼び出しがあります' };
+  const data = e.data ? e.data.json() : { title: 'TruckCALL', message: '呼び出しがあります' };
+  const title = data.title || 'TruckCALL';
+  const body = data.message || data.body || '呼び出しがあります';
   e.waitUntil(
-    self.registration.showNotification(data.title || 'TruckCALL', {
-      body: data.message || data.body || '呼び出しがあります',
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
-      tag: 'truckcall',
-      renotify: true,
-      requireInteraction: true,
-    })
+    Promise.all([
+      self.registration.showNotification(title, {
+        body,
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+        tag: 'truckcall',
+        renotify: true,
+        requireInteraction: true,
+        data: { message: body },
+      }),
+      // 開いているページに通知内容を転送
+      clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+        list.forEach(c => c.postMessage({ type: 'push', title, body }));
+      }),
+    ])
   );
 });
 
