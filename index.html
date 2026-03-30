@@ -254,10 +254,10 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ subscription: sub }),
       });
-      setStatus('connected', 'Push登録済み');
+      document.querySelector('footer').textContent = 'Push登録済み ✓';
       console.log('[Push] subscription registered');
     } catch (e) {
-      setStatus('error', `Push失敗: ${e.message}`);
+      document.querySelector('footer').textContent = `Push失敗: ${e.message || e.name || String(e)}`;
       console.warn('[Push] subscribe failed:', e);
     }
   }
