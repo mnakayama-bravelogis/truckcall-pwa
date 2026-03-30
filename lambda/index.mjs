@@ -13,25 +13,19 @@ webpush.setVapidDetails(
 function ok(body, contentType = 'text/plain') {
   return {
     statusCode: 200,
-    headers: {
-      'Content-Type': contentType,
-      'Access-Control-Allow-Origin': '*',
-    },
+    headers: { 'Content-Type': contentType },
     body: typeof body === 'string' ? body : JSON.stringify(body),
   };
 }
 
 function err(statusCode, message) {
-  return {
-    statusCode,
-    headers: { 'Access-Control-Allow-Origin': '*' },
-    body: message,
-  };
+  return { statusCode, body: message };
 }
 
 export const handler = async (event) => {
   const path = event.rawPath;
   const method = event.requestContext?.http?.method ?? 'GET';
+  console.log(`[${method}] ${path}`);
 
   // CORS preflight
   if (method === 'OPTIONS') {
