@@ -37,10 +37,17 @@ self.addEventListener('push', e => {
 
 self.addEventListener('notificationclick', e => {
   e.notification.close();
+  const { title, message } = e.notification.data || {};
   e.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-      if (list.length > 0) return list[0].focus();
-      return clients.openWindow('/truckcall-pwa/');
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async list => {
+      const client = list.length > 0
+        ? await list[0].focus()
+        : await clients.openWindow('/truckcall-pwa/');
+      if (client && message) {
+        // ページが準備できるまで少し待ってからメッセージ送信
+        await new Promise(r => setTimeout(r, 600));
+        client.postMessage({ type: 'push', title: title || 'TruckCALL', body: message });
+      }
     })
   );
 });
