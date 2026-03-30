@@ -258,6 +258,9 @@
       if (!res.ok) throw new Error(`VAPID key fetch failed: ${res.status}`);
       const publicKey = await res.text();
       footer.textContent = '2/3 Push登録中...';
+      // 既存subscriptionがあれば一度解除してから再登録
+      const existing = await reg.pushManager.getSubscription();
+      if (existing) await existing.unsubscribe();
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(publicKey),
