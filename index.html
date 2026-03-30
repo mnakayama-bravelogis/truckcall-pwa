@@ -407,6 +407,17 @@
     });
   }
 
+  // 通知タップで開いた場合、URLパラメータから通知内容を表示
+  const pushParam = new URLSearchParams(location.search).get('push');
+  if (pushParam) {
+    try {
+      const { title, message } = JSON.parse(decodeURIComponent(pushParam));
+      addNotification(title, message);
+    } catch {}
+    // URLをきれいにする
+    history.replaceState(null, '', location.pathname);
+  }
+
   checkPermission();
   connect();
 
