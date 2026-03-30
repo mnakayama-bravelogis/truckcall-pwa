@@ -238,6 +238,11 @@
 
   // Web Push subscription を Lambda に登録
   async function subscribePush(reg) {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+    if (!isStandalone) {
+      setStatus('error', 'ホーム画面から開いてください');
+      return;
+    }
     try {
       const publicKey = await fetch(`${BACKEND_URL}/vapid-public-key`).then(r => r.text());
       const sub = await reg.pushManager.subscribe({
@@ -249,8 +254,10 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ subscription: sub }),
       });
+      setStatus('connected', 'Push登録済み');
       console.log('[Push] subscription registered');
     } catch (e) {
+      setStatus('error', `Push失敗: ${e.message}`);
       console.warn('[Push] subscribe failed:', e);
     }
   }

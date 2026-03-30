@@ -1,4 +1,4 @@
-const CACHE_NAME = 'truckcall-v3';
+const CACHE_NAME = 'truckcall-v4';
 const ASSETS = ['/truckcall-pwa/', '/truckcall-pwa/index.html', '/truckcall-pwa/manifest.json'];
 
 self.addEventListener('install', e => {
