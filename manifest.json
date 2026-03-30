@@ -2,7 +2,7 @@
   "name": "TruckCALL",
   "short_name": "TruckCALL",
   "description": "トラック呼び出し通知",
-  "start_url": "/",
+  "start_url": "/truckcall-pwa/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#1b5e20",
