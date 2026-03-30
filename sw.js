@@ -16,8 +16,11 @@ self.addEventListener('push', e => {
   const data = e.data ? e.data.json() : { title: 'TruckCALL', message: '呼び出しがあります' };
   const title = data.title || 'TruckCALL';
   const body = data.message || data.body || '呼び出しがあります';
+  const time = new Date().toISOString();
+
   e.waitUntil(
     Promise.all([
+      // OS通知を表示
       self.registration.showNotification(title, {
         body,
         icon: '/icon-192.png',
@@ -25,24 +28,25 @@ self.addEventListener('push', e => {
         tag: 'truckcall',
         renotify: true,
         requireInteraction: true,
-        data: { message: body },
       }),
-      // 開いているページに通知内容を転送
-      clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-        list.forEach(c => c.postMessage({ type: 'push', title, body }));
-      }),
+      // CacheAPIに保存（ページ起動時に読み取る）
+      caches.open('truckcall-push').then(cache =>
+        cache.put('/pending', new Response(JSON.stringify({ title, body, time })))
+      ),
+      // フォアグラウンドのページにも即時転送
+      clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list =>
+        list.forEach(c => c.postMessage({ type: 'push', title, body }))
+      ),
     ])
   );
 });
 
 self.addEventListener('notificationclick', e => {
   e.notification.close();
-  const { title, message } = e.notification.data || {};
-  const url = '/truckcall-pwa/?push=' + encodeURIComponent(JSON.stringify({ title, message }));
   e.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-      if (list.length > 0) return list[0].navigate(url);
-      return clients.openWindow(url);
+      if (list.length > 0) return list[0].focus();
+      return clients.openWindow('/truckcall-pwa/');
     })
   );
 });

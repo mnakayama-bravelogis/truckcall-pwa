@@ -407,19 +407,17 @@
     });
   }
 
-  // 通知タップで開いた場合、URLパラメータから通知内容を表示
-  const pushParam = new URLSearchParams(location.search).get('push');
-  if (pushParam) {
-    try {
-      const { title, message } = JSON.parse(decodeURIComponent(pushParam));
-      addNotification(title, message);
-    } catch {}
-    // URLをきれいにする
-    history.replaceState(null, '', location.pathname);
-  }
-
   checkPermission();
   connect();
+
+  // 起動時にCacheAPIから未読push通知を取り出して表示
+  caches.open('truckcall-push').then(async cache => {
+    const r = await cache.match('/pending');
+    if (!r) return;
+    const { title, body } = await r.json();
+    addNotification(title, body);
+    cache.delete('/pending');
+  });
 
   // 既に許可済みの場合はサービスワーカー準備後にsubscription登録
   if ('serviceWorker' in navigator && Notification.permission === 'granted') {
