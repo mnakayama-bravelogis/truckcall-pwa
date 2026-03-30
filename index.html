@@ -216,6 +216,9 @@
   const SSE_URL = `https://ntfy.sh/${TOPIC}/sse`;
   const MAX_NOTIFICATIONS = 5;
 
+  // ★ Lambda Function URL（sam deploy後に差し替え）
+  const BACKEND_URL = 'https://vczqdxbgo2drza6qwtxtvr2sle0ohcfg.lambda-url.ap-northeast-1.on.aws';
+
   let notifications = [];
   let reconnectDelay = 2000;
   let es = null;
@@ -223,6 +226,33 @@
   // サービスワーカー登録
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(console.error);
+  }
+
+  // Base64url → Uint8Array（VAPID applicationServerKey用）
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw = atob(base64);
+    return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+  }
+
+  // Web Push subscription を Lambda に登録
+  async function subscribePush(reg) {
+    try {
+      const publicKey = await fetch(`${BACKEND_URL}/vapid-public-key`).then(r => r.text());
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
+      });
+      await fetch(`${BACKEND_URL}/subscribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscription: sub }),
+      });
+      console.log('[Push] subscription registered');
+    } catch (e) {
+      console.warn('[Push] subscribe failed:', e);
+    }
   }
 
   // 通知許可状態チェック
@@ -237,6 +267,11 @@
     const result = await Notification.requestPermission();
     if (result === 'granted') {
       document.getElementById('permission-banner').style.display = 'none';
+      // 許可後にPush subscriptionを登録
+      if ('serviceWorker' in navigator) {
+        const reg = await navigator.serviceWorker.ready;
+        await subscribePush(reg);
+      }
     }
   }
 
@@ -329,6 +364,11 @@
 
   checkPermission();
   connect();
+
+  // 既に許可済みの場合はサービスワーカー準備後にsubscription登録
+  if ('serviceWorker' in navigator && Notification.permission === 'granted') {
+    navigator.serviceWorker.ready.then(reg => subscribePush(reg));
+  }
 </script>
 
 </body>

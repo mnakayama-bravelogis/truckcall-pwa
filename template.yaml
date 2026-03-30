@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: TruckCALL Web Push backend
+
+Parameters:
+  VapidPublicKey:
+    Type: String
+    Description: VAPID public key (base64url)
+  VapidPrivateKey:
+    Type: String
+    Description: VAPID private key (base64url)
+    NoEcho: true
+
+Globals:
+  Function:
+    Runtime: nodejs22.x
+    Timeout: 30
+    MemorySize: 128
+    Architectures: [arm64]
+
+Resources:
+
+  SubscriptionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: truckcall-subscriptions
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: endpoint
+          AttributeType: S
+      KeySchema:
+        - AttributeName: endpoint
+          KeyType: HASH
+
+  PushFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: truckcall-push
+      CodeUri: lambda/
+      Handler: index.handler
+      Environment:
+        Variables:
+          VAPID_PUBLIC_KEY: !Ref VapidPublicKey
+          VAPID_PRIVATE_KEY: !Ref VapidPrivateKey
+          TABLE_NAME: !Ref SubscriptionsTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref SubscriptionsTable
+      FunctionUrlConfig:
+        AuthType: NONE
+        Cors:
+          AllowOrigins:
+            - '*'
+          AllowMethods:
+            - '*'
+          AllowHeaders:
+            - '*'
+
+Outputs:
+  FunctionUrl:
+    Description: Lambda Function URL (use as BACKEND_URL in index.html)
+    Value: !GetAtt PushFunctionUrl.FunctionUrl
