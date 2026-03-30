@@ -252,20 +252,41 @@
       footer.textContent = 'Push非対応: PushManager未サポート';
       return;
     }
+    let step = '開始前';
     try {
-      footer.textContent = '1/3 VAPID鍵取得中...';
+      step = '1:VAPID鍵取得';
+      footer.textContent = step;
       const res = await fetch(`${BACKEND_URL}/vapid-public-key`);
-      if (!res.ok) throw new Error(`VAPID key fetch failed: ${res.status}`);
-      const publicKey = await res.text();
-      footer.textContent = '2/3 Push登録中...';
-      // 既存subscriptionがあれば一度解除してから再登録
+      if (!res.ok) throw new Error(`status=${res.status}`);
+      const publicKey = (await res.text()).trim();
+      footer.textContent = `1完了 len=${publicKey.length}`;
+      await new Promise(r => setTimeout(r, 800));
+
+      step = '2a:既存subscription確認';
+      footer.textContent = step;
       const existing = await reg.pushManager.getSubscription();
-      if (existing) await existing.unsubscribe();
+      footer.textContent = `2a完了 existing=${!!existing}`;
+      await new Promise(r => setTimeout(r, 800));
+
+      if (existing) {
+        step = '2b:unsubscribe';
+        footer.textContent = step;
+        await existing.unsubscribe();
+        footer.textContent = '2b完了';
+        await new Promise(r => setTimeout(r, 800));
+      }
+
+      step = '3:pushManager.subscribe';
+      footer.textContent = step;
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(publicKey),
       });
-      footer.textContent = '3/3 サーバーに送信中...';
+      footer.textContent = '3完了 subscribed!';
+      await new Promise(r => setTimeout(r, 800));
+
+      step = '4:サーバー送信';
+      footer.textContent = step;
       await fetch(`${BACKEND_URL}/subscribe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -274,7 +295,7 @@
       footer.textContent = 'Push登録済み ✓';
       console.log('[Push] subscription registered');
     } catch (e) {
-      footer.textContent = `Push失敗(${e.name}): ${e.message} | standalone=${isStandalone} push=${hasPushManager} perm=${permission}`;
+      footer.textContent = `失敗@${step}: ${e.name}: ${e.message}`;
       console.warn('[Push] subscribe failed:', e);
     }
   }
