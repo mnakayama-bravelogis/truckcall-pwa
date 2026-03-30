@@ -244,7 +244,9 @@
       return;
     }
     try {
-      const publicKey = await fetch(`${BACKEND_URL}/vapid-public-key`).then(r => r.text());
+      const res = await fetch(`${BACKEND_URL}/vapid-public-key`);
+      if (!res.ok) throw new Error(`VAPID key fetch failed: ${res.status}`);
+      const publicKey = await res.text();
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(publicKey),
