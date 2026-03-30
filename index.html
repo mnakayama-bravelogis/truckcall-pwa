@@ -329,15 +329,15 @@
     label.textContent = text;
   }
 
-  // 通知を画面に追加
-  function addNotification(title, body, isNew = true) {
+  // 通知を画面に追加（silent=trueのときはOS通知を出さない）
+  function addNotification(title, body, isNew = true, silent = false) {
     const now = new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
     notifications.unshift({ title, body, time: now, isNew });
     if (notifications.length > MAX_NOTIFICATIONS) notifications.pop();
     renderNotifications();
 
-    // OS通知を表示（許可済みの場合）
-    if (Notification.permission === 'granted') {
+    // OS通知を表示（許可済み かつ silentでない場合）
+    if (!silent && Notification.permission === 'granted') {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then(reg => {
           reg.showNotification(title || 'TruckCALL', {
@@ -417,7 +417,7 @@
     const r = await cache.match('/pending');
     if (!r) return;
     const { title, body } = await r.json();
-    addNotification(title, body);
+    addNotification(title, body, true, true); // silent=true: SW側でOS通知済み
     await cache.delete('/pending');
   }
 
@@ -436,7 +436,7 @@
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('message', e => {
       if (e.data?.type === 'push') {
-        addNotification(e.data.title, e.data.body);
+        addNotification(e.data.title, e.data.body, true, true); // silent=true
       }
     });
   }
