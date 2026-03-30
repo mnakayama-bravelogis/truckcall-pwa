@@ -262,28 +262,14 @@
       footer.textContent = `1完了 len=${publicKey.length}`;
       await new Promise(r => setTimeout(r, 800));
 
-      step = '2a:既存subscription確認';
+      step = '2:subscription取得';
       footer.textContent = step;
+      // 既存subscriptionを再利用。なければ新規作成（毎回新規作成するとDynamoDBに重複が溜まる）
       const existing = await reg.pushManager.getSubscription();
-      footer.textContent = `2a完了 existing=${!!existing}`;
-      await new Promise(r => setTimeout(r, 800));
-
-      if (existing) {
-        step = '2b:unsubscribe';
-        footer.textContent = step;
-        await existing.unsubscribe();
-        footer.textContent = '2b完了';
-        await new Promise(r => setTimeout(r, 800));
-      }
-
-      step = '3:pushManager.subscribe';
-      footer.textContent = step;
-      const sub = await reg.pushManager.subscribe({
+      const sub = existing || await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(publicKey),
       });
-      footer.textContent = '3完了 subscribed!';
-      await new Promise(r => setTimeout(r, 800));
 
       step = '4:サーバー送信';
       footer.textContent = step;
