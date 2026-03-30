@@ -271,7 +271,7 @@
       footer.textContent = 'Push登録済み ✓';
       console.log('[Push] subscription registered');
     } catch (e) {
-      footer.textContent = `Push失敗(${e.name}): ${e.message}`;
+      footer.textContent = `Push失敗(${e.name}): ${e.message} | standalone=${isStandalone} push=${hasPushManager} perm=${permission}`;
       console.warn('[Push] subscribe failed:', e);
     }
   }
