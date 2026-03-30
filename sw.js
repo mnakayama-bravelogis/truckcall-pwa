@@ -1,4 +1,4 @@
-const CACHE_NAME = 'truckcall-v5';
+const CACHE_NAME = 'truckcall-v6';
 const ASSETS = ['/truckcall-pwa/', '/truckcall-pwa/index.html', '/truckcall-pwa/manifest.json'];
 
 self.addEventListener('install', e => {
@@ -11,6 +11,8 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  // 同一オリジンのみキャッシュ。外部API（Lambda等）はそのまま通す
+  if (!e.request.url.startsWith(self.location.origin)) return;
   e.respondWith(
     caches.match(e.request).then(r => r || fetch(e.request))
   );
