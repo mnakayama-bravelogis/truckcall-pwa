@@ -222,7 +222,7 @@
 
   // サービスワーカー登録
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(console.error);
+    navigator.serviceWorker.register('./sw.js').catch(console.error);
   }
 
   // 通知許可状態チェック

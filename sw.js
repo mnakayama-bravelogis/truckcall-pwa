@@ -1,4 +1,4 @@
-const CACHE_NAME = 'truckcall-v1';
+const CACHE_NAME = 'truckcall-v2';
 const ASSETS = ['/truckcall-pwa/', '/truckcall-pwa/index.html', '/truckcall-pwa/manifest.json'];
 
 self.addEventListener('install', e => {
@@ -36,7 +36,7 @@ self.addEventListener('notificationclick', e => {
   e.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
       if (list.length > 0) return list[0].focus();
-      return clients.openWindow('/');
+      return clients.openWindow('/truckcall-pwa/');
     })
   );
 });
